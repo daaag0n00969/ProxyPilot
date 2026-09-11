@@ -1,5 +1,5 @@
 #define MyAppName "ProxyPilot"
-#define MyAppVersion "1.0.1"
+#define MyAppVersion "1.0.2"
 #define MyAppPublisher "daaag0n00969"
 #define MyAppURL "https://github.com/daaag0n00969/ProxyPilot"
 #define MyAppExeName "ProxyPilot.exe"
@@ -20,7 +20,7 @@ LicenseFile=..\LICENSE
 InfoBeforeFile=..\installer\Welcome.txt
 OutputDir=..\artifacts
 OutputBaseFilename=ProxyPilot-Setup-{#MyAppVersion}-x64
-SetupIconFile=
+SetupIconFile=..\assets\app.ico
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern

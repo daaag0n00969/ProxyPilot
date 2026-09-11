@@ -13,7 +13,7 @@ dotnet publish (Join-Path $Root "ProxyPilot\ProxyPilot.csproj") `
   -c Release -r win-x64 --self-contained true `
   -p:PublishSingleFile=false `
   -p:IncludeNativeLibrariesForSelfExtract=false `
-  -p:Version=1.0.1 `
+  -p:Version=1.0.2 `
   -o $Publish
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed" }
 
@@ -25,7 +25,10 @@ $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.
 if (-not $vs) { throw "MSVC not found (need Visual Studio C++ tools to build the launcher)." }
 $vcvars = Join-Path $vs "VC\Auxiliary\Build\vcvars64.bat"
 $cfile = Join-Path $Root "installer\launcher.c"
-$cmd = "call `"$vcvars`" >nul && cd /d `"$LauncherOut`" && cl /nologo /O2 /W3 /DUNICODE /D_UNICODE `"$cfile`" /Fe:ProxyPilot.exe /link /SUBSYSTEM:WINDOWS user32.lib /MANIFESTUAC:""level='requireAdministrator' uiAccess='false'"""
+$ico = Join-Path $Root "assets\app.ico"
+$rc = Join-Path $LauncherOut "launcher.rc"
+Set-Content -Path $rc -Value "1 ICON `"$($ico.Replace('\','\\'))`"" -Encoding ASCII
+$cmd = "call `"$vcvars`" >nul && cd /d `"$LauncherOut`" && rc /nologo /fo launcher.res launcher.rc && cl /nologo /O2 /W3 /DUNICODE /D_UNICODE `"$cfile`" launcher.res /Fe:ProxyPilot.exe /link /SUBSYSTEM:WINDOWS user32.lib /MANIFESTUAC:""level='requireAdministrator' uiAccess='false'"""
 cmd.exe /c $cmd
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path (Join-Path $LauncherOut "ProxyPilot.exe"))) {
     throw "native launcher compile failed"

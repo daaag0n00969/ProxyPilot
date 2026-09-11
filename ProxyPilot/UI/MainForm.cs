@@ -20,6 +20,13 @@ internal sealed class MainForm : Form
     {
         _profile = ProfileStore.LoadOrCreate();
         Text = "ProxyPilot";
+        try
+        {
+            var icoPath = Environment.ProcessPath;
+            if (!string.IsNullOrEmpty(icoPath))
+                Icon = Icon.ExtractAssociatedIcon(icoPath);
+        }
+        catch { /* default form icon */ }
         Size = new Size(1100, 640);
         MinimumSize = new Size(800, 480);
         StartPosition = FormStartPosition.CenterScreen;
@@ -70,7 +77,7 @@ internal sealed class MainForm : Form
 
         _tray.Text = "ProxyPilot";
         _tray.Visible = true;
-        _tray.Icon = SystemIcons.Shield;
+        _tray.Icon = Icon ?? SystemIcons.Application;
         _tray.DoubleClick += (_, _) => { Show(); WindowState = FormWindowState.Normal; };
         var trayMenu = new ContextMenuStrip();
         trayMenu.Items.Add("Открыть", null, (_, _) => { Show(); WindowState = FormWindowState.Normal; });
