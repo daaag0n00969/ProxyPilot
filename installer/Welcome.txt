@@ -1,0 +1,16 @@
+ProxyPilot
+Transparent per-process SOCKS/HTTP proxy for Windows
+
+This installer requires Administrator rights. ProxyPilot loads the WinDivert
+kernel driver (WinDivert64.sys) to intercept TCP — that only works elevated.
+
+Kaspersky and other antivirus products may flag WinDivert64.sys with a
+heuristic ("Expert analysis"). That is expected for a packet-filter driver,
+not a virus signature. Add an exclusion for:
+
+  C:\Program Files\ProxyPilot
+
+After install, start Happ (or another SOCKS5 proxy), then start ProxyPilot
+from the Start menu and click «Запустить».
+
+Source: https://github.com/daaag0n00969/ProxyPilot

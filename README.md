@@ -79,7 +79,17 @@ flowchart LR
 - **Administrator** — the WinDivert driver will not load otherwise
 - A SOCKS5/HTTP proxy, e.g. Happ listening on `127.0.0.1:10808`
 
-## Run
+## Install
+
+Download **ProxyPilot-Setup-*-x64.exe** from [Releases](https://github.com/daaag0n00969/ProxyPilot/releases). The setup is self-contained (no separate .NET install), requires Administrator, and puts shortcuts in the Start menu.
+
+To build the installer locally (Inno Setup 6 + .NET 8 SDK):
+
+```powershell
+.\installer\build.ps1
+```
+
+## Run from source
 
 ```powershell
 dotnet build ProxyPilot/ProxyPilot.csproj -c Release

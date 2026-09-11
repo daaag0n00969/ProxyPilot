@@ -25,3 +25,6 @@ Desktop.ini
 error-screenshot.png
 engine.log
 profile.json
+
+# Publish / installer output
+artifacts/
