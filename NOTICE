@@ -1,0 +1,14 @@
+ProxyPilot
+Copyright (c) 2026 daaag0n00969
+
+This product includes WinDivert, used to intercept and inject packets on Windows.
+
+  WinDivert
+  https://www.reqrypt.org/windivert.html
+  Copyright (C) basil00 and contributors
+  Licensed under the GNU Lesser General Public License v3 (or later)
+  and/or the GNU General Public License v2 (or later).
+  See third_party/WinDivert/LICENSE.txt.
+
+WinDivert.dll and WinDivert64.sys are redistributed unchanged from the
+official WinDivert 2.2.2-A x64 package.

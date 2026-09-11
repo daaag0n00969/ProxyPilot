@@ -1,0 +1,27 @@
+# Build
+bin/
+obj/
+[Bb]uild/
+[Ll]og/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+.idea/
+
+# Test
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# OS
+Thumbs.db
+Desktop.ini
+*.log
+
+# Local run
+error-screenshot.png
+engine.log
+profile.json

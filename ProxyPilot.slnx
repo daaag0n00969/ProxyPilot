@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="ProxyPilot.Core/ProxyPilot.Core.csproj" />
+  <Project Path="ProxyPilot/ProxyPilot.csproj" />
+  <Project Path="ProxyPilot.Tests/ProxyPilot.Tests.csproj" />
+</Solution>
