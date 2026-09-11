@@ -124,6 +124,16 @@ ProxyPilot.slnx
 - **Steam Cloud blob hosts** are resolved via DoH/cache; TCP to the resulting Azure IPs is direct when that path works.
 - WinDivert filters cannot use `not (...)` groups; exclusions use `!=` or user-mode rules.
 
+## Antivirus (Kaspersky and others)
+
+Kaspersky may toast **WinDivert64.sys** with *«Expert analysis»* / *«may be used by attackers»*. That is a **heuristic**, not a malware signature.
+
+WinDivert is a signed kernel driver that can intercept and inject packets. The same capability is used by malware, cheats, and DPI tools — so desktop AVs treat the driver as dual-use. ProxyPilot loads the **unmodified official** 2.2.2-A binary from `third_party/WinDivert/`.
+
+Safe approach: add an exclusion for the project folder or for `WinDivert64.sys` + `ProxyPilot.exe`. Do not disable the whole product. Packing or patching the driver to hide it from AV is a bad idea.
+
+Kaspersky: **Settings → Additional → Threats and Exclusions → Exclusions → Add folder**.
+
 ## License
 
 - ProxyPilot source: [MIT](LICENSE)
