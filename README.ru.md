@@ -6,9 +6,9 @@
 
 ## Коротко
 
-1. Запустите Happ (SOCKS5 на `127.0.0.1:10808`).
-2. Запустите `Запустить ProxyPilot.bat` **от администратора**.
-3. Нажмите **Запустить**.
+1. Скачайте setup из [Releases](https://github.com/daaag0n00969/ProxyPilot/releases) и установите.
+2. В `C:\Program Files\ProxyPilot\` лежит **ProxyPilot.exe** — его и запускайте (остальное в `bin\`).
+3. Запустите Happ (SOCKS5 на `127.0.0.1:10808`), затем ProxyPilot и нажмите **Запустить**.
 
 Steam и Grok Bot — через Happ. Сами Happ / xray / grok.exe — напрямую.
 

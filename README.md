@@ -83,6 +83,14 @@ flowchart LR
 
 Download **ProxyPilot-Setup-*-x64.exe** from [Releases](https://github.com/daaag0n00969/ProxyPilot/releases). The setup is self-contained (no separate .NET install), requires Administrator, and puts shortcuts in the Start menu.
 
+After install, the folder looks like this:
+
+```
+C:\Program Files\ProxyPilot\
+  ProxyPilot.exe     ← start this
+  bin\               runtime, WinDivert, main app
+```
+
 To build the installer locally (Inno Setup 6 + .NET 8 SDK):
 
 ```powershell
