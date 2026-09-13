@@ -59,7 +59,7 @@ public sealed class Profile
                 {
                     Name = "Localhost",
                     Action = RuleAction.Direct,
-                    Targets = ["localhost", "127.0.0.1", "127.147.0.0/16", "%ComputerName%", "::1"]
+                    Targets = ["localhost", "127.0.0.1", "%ComputerName%", "::1"]
                 },
                 new ProfileRule
                 {

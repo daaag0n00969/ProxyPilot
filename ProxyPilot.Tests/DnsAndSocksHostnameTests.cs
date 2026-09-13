@@ -31,6 +31,15 @@ public class DnsAndSocksHostnameTests
     }
 
     [Fact]
+    public void SteamCdnHosts_AreIntercepted()
+    {
+        Assert.True(DnsCache.IsSteamNetworkHost("cache5-sto2.steamcontent.com"));
+        Assert.True(DnsCache.IsSteamNetworkHost("cmp1-fra1.steamserver.net"));
+        Assert.True(DnsCache.IsSteamNetworkHost("edgenext.cdn.steampipe.steamcontent.com"));
+        Assert.False(DnsCache.IsCloudStorageHost("cache5-sto2.steamcontent.com"));
+    }
+
+    [Fact]
     public void SeedKnownCloud_IsCacheHit()
     {
         DnsCache.SeedKnownCloud();

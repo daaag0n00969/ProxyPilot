@@ -36,13 +36,13 @@ public class RuleEngineTests
     }
 
     [Fact]
-    public void LancacheDirect_FakeIpGoesThroughProxy()
+    public void HappFakeIp_ForSteamContent_GoesThroughProxy()
     {
         var engine = new RuleEngine(Profile.CreateDefault());
-        var lancache = engine.Evaluate("steam.exe", IPAddress.Parse("127.147.0.11"), 80);
-        var fakeIp = engine.Evaluate("steam.exe", IPAddress.Parse("127.229.0.132"), 443);
-        Assert.Equal(RuleAction.Direct, lancache.Action);
-        Assert.Equal(RuleAction.Proxy, fakeIp.Action);
+        var contentFake = engine.Evaluate("steam.exe", IPAddress.Parse("127.147.0.11"), 80);
+        var cloudFake = engine.Evaluate("steam.exe", IPAddress.Parse("127.229.0.132"), 443);
+        Assert.Equal(RuleAction.Proxy, contentFake.Action);
+        Assert.Equal(RuleAction.Proxy, cloudFake.Action);
     }
 
     [Fact]

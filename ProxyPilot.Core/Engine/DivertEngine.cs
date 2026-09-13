@@ -72,7 +72,7 @@ public sealed class DivertEngine : IDisposable
         DnsCache.SeedKnownCloud();
         try { ProcessLookup.DnsFlushResolverCache(); }
         catch { /* optional */ }
-        Emit($"Перехват запущен. Релей 0.0.0.0:{_relay.Port}. Фильтр: {filter}");
+        Emit($"Перехват запущен. build=steam-cdn-dns релей :{_relay.Port}. Фильтр: {filter}");
         FileLog.Write("DNS seed steamcloudsweden.blob.core.windows.net -> 20.60.253.225, 20.209.216.97, 20.60.253.129; resolver cache flushed");
         if (_profile.DnsViaProxy && _profile.Proxies.Count > 0)
             _ = Task.Run(() => PrewarmCloudDns(_profile.Proxies, _cts.Token));
@@ -309,9 +309,13 @@ public sealed class DivertEngine : IDisposable
 
         if (pid == _selfPid || (!_rules.ProcessHasProxyRule(name) && !cloudName))
         {
+            if (cloudName)
+                FileLog.Write($"DNS PASSTHROUGH unexpected {qname} proc={name}", true);
             SendOn(_dnsHandle, packet, length, ref addr);
             return;
         }
+
+        FileLog.Write($"DNS steal {qname} type={qtype} via Happ (proc={name})");
 
         if (qtype == 1 && DnsCache.TryGet(qname, out var cached) && cached.Length > 0)
         {
@@ -369,7 +373,10 @@ public sealed class DivertEngine : IDisposable
             "steamcloudsweden.blob.core.windows.net",
             "steamclouduseast2.blob.core.windows.net",
             "steamcloud-frf.s3.dualstack.eu-central-1.amazonaws.com",
-            "steamcloud-eu-ams.storage.googleapis.com"
+            "steamcloud-eu-ams.storage.googleapis.com",
+            "api.steampowered.com",
+            "cdn.steampipe.steamcontent.com",
+            "lancache.steamcontent.com"
         };
         foreach (var name in names)
         {

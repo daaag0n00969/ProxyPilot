@@ -13,7 +13,7 @@ dotnet publish (Join-Path $Root "ProxyPilot\ProxyPilot.csproj") `
   -c Release -r win-x64 --self-contained true `
   -p:PublishSingleFile=false `
   -p:IncludeNativeLibrariesForSelfExtract=false `
-  -p:Version=1.0.2 `
+  -p:Version=1.0.3 `
   -o $Publish
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed" }
 

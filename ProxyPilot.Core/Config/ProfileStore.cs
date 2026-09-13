@@ -79,9 +79,9 @@ public static class ProfileStore
             r.Targets.Any(t => t.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase)));
         if (localhost is null)
             return;
-        localhost.Targets.RemoveAll(t => t.Equals("127.0.0.0/8", StringComparison.OrdinalIgnoreCase));
-        if (!localhost.Targets.Any(t => t.Equals("127.147.0.0/16", StringComparison.OrdinalIgnoreCase)))
-            localhost.Targets.Add("127.147.0.0/16");
+        localhost.Targets.RemoveAll(t =>
+            t.Equals("127.0.0.0/8", StringComparison.OrdinalIgnoreCase) ||
+            t.Equals("127.147.0.0/16", StringComparison.OrdinalIgnoreCase));
     }
 
     public static void Save(Profile profile, string? path = null)

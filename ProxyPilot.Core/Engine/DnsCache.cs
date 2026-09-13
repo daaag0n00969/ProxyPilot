@@ -49,9 +49,24 @@ public static class DnsCache
                || (qname.Contains("storage.googleapis.com", StringComparison.OrdinalIgnoreCase) && qname.Contains("steam", StringComparison.OrdinalIgnoreCase));
     }
 
-    public static bool IsCloudHost(string? qname) =>
-        IsCloudStorageHost(qname)
-        || (!string.IsNullOrWhiteSpace(qname) && qname.Contains("steampowered.com", StringComparison.OrdinalIgnoreCase));
+    public static bool IsSteamNetworkHost(string? qname)
+    {
+        if (string.IsNullOrWhiteSpace(qname))
+            return false;
+        return IsCloudStorageHost(qname)
+               || qname.Contains("steampowered.com", StringComparison.OrdinalIgnoreCase)
+               || qname.Contains("steamcontent.com", StringComparison.OrdinalIgnoreCase)
+               || qname.Contains("steamserver.net", StringComparison.OrdinalIgnoreCase)
+               || qname.Contains("steamstatic.com", StringComparison.OrdinalIgnoreCase)
+               || qname.Contains("steamcommunity.com", StringComparison.OrdinalIgnoreCase)
+               || qname.Contains("steamusercontent.com", StringComparison.OrdinalIgnoreCase)
+               || qname.Contains("valvesoftware.com", StringComparison.OrdinalIgnoreCase)
+               || qname.Contains("steam-chat.com", StringComparison.OrdinalIgnoreCase)
+               || qname.Contains("steampipe", StringComparison.OrdinalIgnoreCase)
+               || qname.Contains("steamconnecttest.com", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IsCloudHost(string? qname) => IsSteamNetworkHost(qname);
 
     public static bool IsNoisyHost(string? qname)
     {

@@ -1,5 +1,5 @@
 #define MyAppName "ProxyPilot"
-#define MyAppVersion "1.0.2"
+#define MyAppVersion "1.0.3"
 #define MyAppPublisher "daaag0n00969"
 #define MyAppURL "https://github.com/daaag0n00969/ProxyPilot"
 #define MyAppExeName "ProxyPilot.exe"
