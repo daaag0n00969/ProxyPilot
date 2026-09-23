@@ -1,5 +1,5 @@
 #define MyAppName "ProxyPilot"
-#define MyAppVersion "1.0.4"
+#define MyAppVersion "1.0.5"
 #define MyAppPublisher "daaag0n00969"
 #define MyAppURL "https://github.com/daaag0n00969/ProxyPilot"
 #define MyAppExeName "ProxyPilot.exe"
@@ -43,8 +43,10 @@ Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "..\artifacts\publish\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\artifacts\launcher\ProxyPilot.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\artifacts\publish\ProxyPilot.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\artifacts\publish\WinDivert.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\artifacts\publish\WinDivert64.sys"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\artifacts\publish\WinDivert-LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"

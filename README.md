@@ -87,9 +87,12 @@ After install, the folder looks like this:
 
 ```
 C:\Program Files\ProxyPilot\
-  ProxyPilot.exe     ← start this
-  bin\               runtime, WinDivert, main app
+  ProxyPilot.exe          the application itself
+  WinDivert.dll
+  WinDivert64.sys
 ```
+
+Kaspersky may report `VHO:Trojan.Win32.Tasker.gen` or “not-a-virus” on an unsigned build that loads a packet driver. That is a heuristic, not a malware signature we planted. Add an exclusion for `C:\Program Files\ProxyPilot` before installing, and do not “disinfect” the folder.
 
 To build the installer locally (Inno Setup 6 + .NET 8 SDK):
 

@@ -11,7 +11,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <RootNamespace>ProxyPilot</RootNamespace>
     <AssemblyName>ProxyPilot</AssemblyName>
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
     <Product>ProxyPilot</Product>
     <Description>Transparent per-process SOCKS/HTTP proxy client for Windows</Description>
   </PropertyGroup>
