@@ -20,6 +20,10 @@ dotnet publish (Join-Path $Root "ProxyPilot\ProxyPilot.csproj") `
   -o $Publish
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed" }
 
+Copy-Item (Join-Path $Root "third_party\WinDivert\WinDivert.dll") $Publish -Force
+Copy-Item (Join-Path $Root "third_party\WinDivert\WinDivert64.sys") $Publish -Force
+Copy-Item (Join-Path $Root "third_party\WinDivert\LICENSE.txt") (Join-Path $Publish "WinDivert-LICENSE.txt") -Force
+
 $iscc = @(
   "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
   "${env:ProgramFiles}\Inno Setup 6\ISCC.exe",
