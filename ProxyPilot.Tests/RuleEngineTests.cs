@@ -46,6 +46,24 @@ public class RuleEngineTests
     }
 
     [Fact]
+    public void NvidiaApp_GoesThroughProxy()
+    {
+        var engine = new RuleEngine(Profile.CreateDefault());
+        Assert.Equal(RuleAction.Proxy, engine.Evaluate("NVIDIA App.exe", IPAddress.Parse("8.8.8.8"), 443).Action);
+        Assert.Equal(RuleAction.Proxy, engine.Evaluate("nvcontainer.exe", IPAddress.Parse("8.8.8.8"), 443).Action);
+        Assert.Equal("NVIDIA App via Happ", engine.Evaluate("nvcontainer.exe", IPAddress.Parse("8.8.8.8"), 443).Rule.Name);
+    }
+
+    [Fact]
+    public void VsCode_AndCodex_GoThroughProxy()
+    {
+        var engine = new RuleEngine(Profile.CreateDefault());
+        Assert.Equal(RuleAction.Proxy, engine.Evaluate("Code.exe", IPAddress.Parse("1.1.1.1"), 443).Action);
+        Assert.Equal(RuleAction.Proxy, engine.Evaluate("codex.exe", IPAddress.Parse("1.1.1.1"), 443).Action);
+        Assert.Equal("VS Code / ChatGPT via Happ", engine.Evaluate("Code.exe", IPAddress.Parse("1.1.1.1"), 443).Rule.Name);
+    }
+
+    [Fact]
     public void GrokBot_QuotedName_Matches()
     {
         var engine = new RuleEngine(Profile.CreateDefault());

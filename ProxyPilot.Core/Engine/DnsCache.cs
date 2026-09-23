@@ -66,7 +66,35 @@ public static class DnsCache
                || qname.Contains("steamconnecttest.com", StringComparison.OrdinalIgnoreCase);
     }
 
-    public static bool IsCloudHost(string? qname) => IsSteamNetworkHost(qname);
+    public static bool IsNvidiaHost(string? qname)
+    {
+        if (string.IsNullOrWhiteSpace(qname))
+            return false;
+        return qname.Contains("nvidia.com", StringComparison.OrdinalIgnoreCase)
+               || qname.Contains("geforce.com", StringComparison.OrdinalIgnoreCase)
+               || qname.Contains("nvidiagrid.net", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IsOpenAiHost(string? qname)
+    {
+        if (string.IsNullOrWhiteSpace(qname))
+            return false;
+        return qname.Contains("chatgpt.com", StringComparison.OrdinalIgnoreCase)
+               || qname.Contains("openai.com", StringComparison.OrdinalIgnoreCase)
+               || qname.Contains("oaistatic.com", StringComparison.OrdinalIgnoreCase)
+               || qname.Contains("oaiusercontent.com", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IsConnectivityHost(string? qname)
+    {
+        if (string.IsNullOrWhiteSpace(qname))
+            return false;
+        return qname.Contains("msftconnecttest.com", StringComparison.OrdinalIgnoreCase)
+               || qname.Contains("msftncsi.com", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IsCloudHost(string? qname) =>
+        IsSteamNetworkHost(qname) || IsOpenAiHost(qname) || IsNvidiaHost(qname) || IsConnectivityHost(qname);
 
     public static bool IsNoisyHost(string? qname)
     {

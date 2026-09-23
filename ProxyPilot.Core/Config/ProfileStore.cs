@@ -55,6 +55,9 @@ public static class ProfileStore
         var profile = JsonSerializer.Deserialize<Profile>(json, JsonOptions) ?? Profile.CreateDefault();
         MigrateSteamHelpers(profile);
         MigrateLoopbackCidr(profile);
+        MigrateVsCodeChatGpt(profile);
+        MigrateNvidiaApp(profile);
+        MigrateConnectivity(profile);
         return profile;
     }
 
@@ -82,6 +85,74 @@ public static class ProfileStore
         localhost.Targets.RemoveAll(t =>
             t.Equals("127.0.0.0/8", StringComparison.OrdinalIgnoreCase) ||
             t.Equals("127.147.0.0/16", StringComparison.OrdinalIgnoreCase));
+    }
+
+    internal static void MigrateVsCodeChatGpt(Profile profile)
+    {
+        if (profile.Rules.Any(r => r.Applications.Any(a => a.Equals("Code.exe", StringComparison.OrdinalIgnoreCase))))
+            return;
+        var proxyId = profile.Proxies.FirstOrDefault()?.Id;
+        var insertAt = Math.Max(0, profile.Rules.Count - 1);
+        profile.Rules.Insert(insertAt, new ProfileRule
+        {
+            Name = "VS Code / ChatGPT via Happ",
+            Action = RuleAction.Proxy,
+            ProxyId = proxyId,
+            Applications =
+            [
+                "Code.exe",
+                "Code - Insiders.exe",
+                "Cursor.exe",
+                "codex.exe",
+                "codex-code-mode-host.exe",
+                "codex-command-runner.exe"
+            ]
+        });
+    }
+
+    internal static void MigrateNvidiaApp(Profile profile)
+    {
+        if (profile.Rules.Any(r => r.Applications.Any(a => a.Equals("NVIDIA App.exe", StringComparison.OrdinalIgnoreCase)
+                                                            || a.Equals("nvcontainer.exe", StringComparison.OrdinalIgnoreCase))))
+            return;
+        var proxyId = profile.Proxies.FirstOrDefault()?.Id;
+        var insertAt = Math.Max(0, profile.Rules.Count - 1);
+        profile.Rules.Insert(insertAt, new ProfileRule
+        {
+            Name = "NVIDIA App via Happ",
+            Action = RuleAction.Proxy,
+            ProxyId = proxyId,
+            Applications =
+            [
+                "NVIDIA App.exe",
+                "NVIDIA Overlay.exe",
+                "nvcontainer.exe",
+                "NVIDIA Share.exe",
+                "NVIDIA GeForce Experience.exe",
+                "NVIDIA Web Helper.exe"
+            ]
+        });
+    }
+
+    internal static void MigrateConnectivity(Profile profile)
+    {
+        if (profile.Rules.Any(r => r.Targets.Any(t => t.Contains("msftconnecttest", StringComparison.OrdinalIgnoreCase))))
+            return;
+        var proxyId = profile.Proxies.FirstOrDefault()?.Id;
+        var insertAt = Math.Max(0, profile.Rules.Count - 1);
+        profile.Rules.Insert(insertAt, new ProfileRule
+        {
+            Name = "Windows online check via Happ",
+            Action = RuleAction.Proxy,
+            ProxyId = proxyId,
+            Targets =
+            [
+                "www.msftconnecttest.com",
+                "ipv6.msftconnecttest.com",
+                "dns.msftncsi.com",
+                "www.msftncsi.com"
+            ]
+        });
     }
 
     public static void Save(Profile profile, string? path = null)

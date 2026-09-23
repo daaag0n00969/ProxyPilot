@@ -37,6 +37,14 @@ public class DnsAndSocksHostnameTests
         Assert.True(DnsCache.IsSteamNetworkHost("cmp1-fra1.steamserver.net"));
         Assert.True(DnsCache.IsSteamNetworkHost("edgenext.cdn.steampipe.steamcontent.com"));
         Assert.False(DnsCache.IsCloudStorageHost("cache5-sto2.steamcontent.com"));
+        Assert.True(DnsCache.IsOpenAiHost("ab.chatgpt.com"));
+        Assert.True(DnsCache.IsOpenAiHost("api.openai.com"));
+        Assert.True(DnsCache.IsCloudHost("ab.chatgpt.com"));
+        Assert.True(DnsCache.IsNvidiaHost("international-gfe.download.nvidia.com"));
+        Assert.True(DnsCache.IsNvidiaHost("gfwsl.geforce.com"));
+        Assert.True(DnsCache.IsCloudHost("international-gfe.download.nvidia.com"));
+        Assert.True(DnsCache.IsConnectivityHost("www.msftconnecttest.com"));
+        Assert.True(DnsCache.IsCloudHost("dns.msftncsi.com"));
     }
 
     [Fact]

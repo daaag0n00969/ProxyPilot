@@ -540,6 +540,10 @@ public sealed class DivertEngine : IDisposable
         var host = DnsCache.Lookup(parsed.DstAddress);
         var interesting = action is "PROXY" or "CLOUD-DIRECT" or "Блок"
                           || name.Contains("steam", StringComparison.OrdinalIgnoreCase)
+                          || name.Contains("Code", StringComparison.OrdinalIgnoreCase)
+                          || name.Contains("codex", StringComparison.OrdinalIgnoreCase)
+                          || name.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase)
+                          || name.Equals("nvcontainer.exe", StringComparison.OrdinalIgnoreCase)
                           || DnsCache.IsCloudDirect(parsed.DstAddress)
                           || DnsCache.IsCloudHost(host);
         if (interesting)

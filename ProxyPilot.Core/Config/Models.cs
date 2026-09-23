@@ -83,6 +83,49 @@ public sealed class Profile
                 },
                 new ProfileRule
                 {
+                    Name = "NVIDIA App via Happ",
+                    Action = RuleAction.Proxy,
+                    ProxyId = happ.Id,
+                    Applications =
+                    [
+                        "NVIDIA App.exe",
+                        "NVIDIA Overlay.exe",
+                        "nvcontainer.exe",
+                        "NVIDIA Share.exe",
+                        "NVIDIA GeForce Experience.exe",
+                        "NVIDIA Web Helper.exe"
+                    ]
+                },
+                new ProfileRule
+                {
+                    Name = "VS Code / ChatGPT via Happ",
+                    Action = RuleAction.Proxy,
+                    ProxyId = happ.Id,
+                    Applications =
+                    [
+                        "Code.exe",
+                        "Code - Insiders.exe",
+                        "Cursor.exe",
+                        "codex.exe",
+                        "codex-code-mode-host.exe",
+                        "codex-command-runner.exe"
+                    ]
+                },
+                new ProfileRule
+                {
+                    Name = "Windows online check via Happ",
+                    Action = RuleAction.Proxy,
+                    ProxyId = happ.Id,
+                    Targets =
+                    [
+                        "www.msftconnecttest.com",
+                        "ipv6.msftconnecttest.com",
+                        "dns.msftncsi.com",
+                        "www.msftncsi.com"
+                    ]
+                },
+                new ProfileRule
+                {
                     Name = "Default",
                     Action = RuleAction.Direct
                 }

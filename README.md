@@ -141,6 +141,7 @@ ProxyPilot.slnx
 - **Happ fake-IP** (`127.229.x`, `127.251.x`, …) is **not** treated as localhost — those connections are proxied with the original hostname in the SOCKS request.
 - **Steam Cloud blob hosts** are resolved via DoH/cache; TCP to the resulting Azure IPs is direct when that path works.
 - **Steam downloads / updates** (`*.steamcontent.com`, `*.steamserver.net`) are resolved via DoH through the proxy. Happ fake-IP ranges such as `127.147.0.0/16` are **proxied**, not treated as localhost.
+- **NVIDIA App** (`NVIDIA App.exe`, `nvcontainer.exe`) and **Windows online check** (`msftconnecttest.com`) go through the proxy, so driver downloads are not stuck “offline” when the ISP blocks those hosts.
 - WinDivert filters cannot use `not (...)` groups; exclusions use `!=` or user-mode rules.
 
 ## Antivirus (Kaspersky and others)
