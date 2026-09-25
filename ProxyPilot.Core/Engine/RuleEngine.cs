@@ -20,39 +20,6 @@ public sealed class RuleEngine
         _chains = profile.Chains.ToDictionary(c => c.Id, StringComparer.OrdinalIgnoreCase);
         _localhostIps = CollectLocalAddresses();
         _hostIps = new Dictionary<string, HashSet<IPAddress>>(StringComparer.OrdinalIgnoreCase);
-        foreach (var rule in profile.Rules)
-        {
-            foreach (var target in rule.Targets)
-            {
-                var host = HostPart(target.Trim());
-                if (host.Length == 0 || host is "*" or "any" || host.Contains('*') || host.Contains('?') || host.Contains('/'))
-                    continue;
-                if (host.Equals("localhost", StringComparison.OrdinalIgnoreCase) || host is "127.0.0.1" or "::1")
-                    continue;
-                if (host.Equals("%ComputerName%", StringComparison.OrdinalIgnoreCase))
-                    host = Environment.MachineName;
-                if (IPAddress.TryParse(host, out _))
-                    continue;
-                if (_hostIps.ContainsKey(host))
-                    continue;
-                try
-                {
-                    _hostIps[host] = Dns.GetHostAddresses(host).ToHashSet();
-                }
-                catch
-                {
-                    _hostIps[host] = [];
-                }
-            }
-        }
-    }
-
-    private static string HostPart(string pattern)
-    {
-        var colon = pattern.LastIndexOf(':');
-        if (colon > 0 && !pattern.Contains('/') && TryParsePortRange(pattern[(colon + 1)..], out _, out _))
-            return pattern[..colon];
-        return pattern;
     }
 
     public RuleDecision Evaluate(string processFileName, IPAddress destination, int port)

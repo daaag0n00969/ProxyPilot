@@ -8,6 +8,9 @@ Kaspersky may flag this unsigned build. WinDivert64.sys is often
 "Expert analysis". A tiny launcher exe was also flagged as
 VHO:Trojan.Win32.Tasker.gen. Version 1.0.5 no longer uses that launcher.
 
+If ProxyPilot is already installed, this setup upgrades it in the same
+folder and keeps %AppData%\ProxyPilot. A running copy is closed first.
+
 Before installing, add an exclusion for:
 
   C:\Program Files\ProxyPilot

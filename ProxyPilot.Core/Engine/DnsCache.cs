@@ -25,8 +25,6 @@ public static class DnsCache
             return;
         hostname = hostname.Trim().TrimEnd('.');
         IpToHost[ip.ToString()] = hostname;
-        if (IsCloudStorageHost(hostname))
-            CloudDirectIps[ip.ToString()] = 1;
     }
 
     public static string? Lookup(IPAddress ip) =>

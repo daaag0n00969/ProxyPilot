@@ -1,5 +1,5 @@
 #define MyAppName "ProxyPilot"
-#define MyAppVersion "1.0.5"
+#define MyAppVersion "1.0.6"
 #define MyAppPublisher "daaag0n00969"
 #define MyAppURL "https://github.com/daaag0n00969/ProxyPilot"
 #define MyAppExeName "ProxyPilot.exe"
@@ -25,6 +25,11 @@ Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=admin
+UsePreviousAppDir=yes
+DisableDirPage=auto
+CloseApplications=force
+CloseApplicationsFilter=ProxyPilot.exe
+RestartApplications=no
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0
@@ -55,3 +60,37 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent runascurrentuser
+
+[Code]
+function GetPreviousVersion(var Version: String): Boolean;
+var
+  Key: String;
+begin
+  Key := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{#SetupSetting("AppId")}_is1';
+  Result := RegQueryStringValue(HKLM64, Key, 'DisplayVersion', Version);
+  if not Result then
+    Result := RegQueryStringValue(HKLM, Key, 'DisplayVersion', Version);
+end;
+
+procedure InitializeWizard;
+var
+  Prev: String;
+begin
+  if GetPreviousVersion(Prev) then
+  begin
+    WizardForm.WelcomeLabel2.Caption :=
+      'На этом компьютере уже установлен ProxyPilot ' + Prev + '.' + #13#10 +
+      'Установщик обновит его до {#MyAppVersion} в той же папке. Настройки в %AppData%\ProxyPilot сохранятся.' + #13#10 +
+      'Запущенный ProxyPilot будет закрыт.' + #13#10#13#10 +
+      WizardForm.WelcomeLabel2.Caption;
+  end;
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  ResultCode: Integer;
+begin
+  Result := '';
+  NeedsRestart := False;
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /IM {#MyAppExeName} /T', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;

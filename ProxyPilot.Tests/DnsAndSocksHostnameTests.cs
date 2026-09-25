@@ -53,7 +53,7 @@ public class DnsAndSocksHostnameTests
         DnsCache.SeedKnownCloud();
         Assert.True(DnsCache.TryGet("steamcloudsweden.blob.core.windows.net", out var ips));
         Assert.Contains(ips, i => i.ToString() == "20.60.253.225");
-        Assert.True(DnsCache.IsCloudDirect(IPAddress.Parse("20.60.253.225")));
+        Assert.False(DnsCache.IsCloudDirect(IPAddress.Parse("20.60.253.225")));
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public class DnsAndSocksHostnameTests
         var ip = IPAddress.Parse("203.0.113.9");
         DnsCache.Remember(ip, "steamcloudsweden.blob.core.windows.net");
         Assert.Equal("steamcloudsweden.blob.core.windows.net", DnsCache.Lookup(ip));
-        Assert.True(DnsCache.IsCloudDirect(ip));
+        Assert.False(DnsCache.IsCloudDirect(ip));
     }
 
     [Fact]

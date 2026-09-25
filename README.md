@@ -81,7 +81,7 @@ flowchart LR
 
 ## Install
 
-Download **ProxyPilot-Setup-*-x64.exe** from [Releases](https://github.com/daaag0n00969/ProxyPilot/releases). The setup is self-contained (no separate .NET install), requires Administrator, and puts shortcuts in the Start menu.
+Download **ProxyPilot-Setup-*-x64.exe** from [Releases](https://github.com/daaag0n00969/ProxyPilot/releases). The setup is self-contained (no separate .NET install), requires Administrator, and puts shortcuts in the Start menu. Installing a newer setup over an older one upgrades in the same folder and keeps `%AppData%\ProxyPilot`.
 
 After install, the folder looks like this:
 

@@ -70,10 +70,8 @@ public sealed class DivertEngine : IDisposable
         }
 
         DnsCache.SeedKnownCloud();
-        try { ProcessLookup.DnsFlushResolverCache(); }
-        catch { /* optional */ }
-        Emit($"Перехват запущен. build=steam-cdn-dns релей :{_relay.Port}. Фильтр: {filter}");
-        FileLog.Write("DNS seed steamcloudsweden.blob.core.windows.net -> 20.60.253.225, 20.209.216.97, 20.60.253.129; resolver cache flushed");
+        Emit($"Перехват запущен. build=fast-start релей :{_relay.Port}. Фильтр: {filter}");
+        FileLog.Write("DNS seed steamcloudsweden.blob.core.windows.net -> 20.60.253.225, 20.209.216.97, 20.60.253.129");
         if (_profile.DnsViaProxy && _profile.Proxies.Count > 0)
             _ = Task.Run(() => PrewarmCloudDns(_profile.Proxies, _cts.Token));
     }
@@ -229,13 +227,6 @@ public sealed class DivertEngine : IDisposable
         if (pid == 0)
             pid = _processes.FindPid(IPAddress.Any, parsed.SrcPort, parsed.DstAddress, parsed.DstPort);
         var name = pid == _selfPid ? "ProxyPilot.exe" : _processes.GetName(pid);
-
-        if (DnsCache.IsCloudDirect(parsed.DstAddress))
-        {
-            LogSyn(name, pid, parsed, "CLOUD-DIRECT", "cloud-ip");
-            Passthrough(packet, length, ref addr);
-            return;
-        }
 
         if (_profile.LoopDetection && _rules.IsProxyEndpoint(parsed.DstAddress, parsed.DstPort))
         {
@@ -538,13 +529,12 @@ public sealed class DivertEngine : IDisposable
     private void LogSyn(string name, int pid, ParsedPacket parsed, string action, string ruleName)
     {
         var host = DnsCache.Lookup(parsed.DstAddress);
-        var interesting = action is "PROXY" or "CLOUD-DIRECT" or "Блок"
+        var interesting = action is "PROXY" or "Блок"
                           || name.Contains("steam", StringComparison.OrdinalIgnoreCase)
                           || name.Contains("Code", StringComparison.OrdinalIgnoreCase)
                           || name.Contains("codex", StringComparison.OrdinalIgnoreCase)
                           || name.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase)
                           || name.Equals("nvcontainer.exe", StringComparison.OrdinalIgnoreCase)
-                          || DnsCache.IsCloudDirect(parsed.DstAddress)
                           || DnsCache.IsCloudHost(host);
         if (interesting)
             FileLog.Write($"TCP {action} {name} pid={pid} {parsed.DstAddress}:{parsed.DstPort} host={host ?? "-"} rule={ruleName}");
