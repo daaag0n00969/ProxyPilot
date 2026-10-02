@@ -46,4 +46,20 @@ public class Socks5Tests
         await server;
         listener.Stop();
     }
+
+    [Fact]
+    public void Socks5Udp_RoundtripAndLocalSkip()
+    {
+        var encoded = Socks5Udp.Encode(IPAddress.Parse("18.119.193.126"), 3005, new byte[] { 9, 8, 7 });
+        Assert.Equal(13, encoded.Length);
+        Assert.Equal(1, encoded[3]);
+        Assert.True(Socks5Udp.TryDecode(encoded, out var address, out var port, out var offset));
+        Assert.Equal("18.119.193.126", address.ToString());
+        Assert.Equal(3005, port);
+        Assert.Equal(new byte[] { 9, 8, 7 }, encoded[offset..]);
+        Assert.False(Socks5Udp.TryDecode(new byte[] { 0, 0, 1, 1, 0, 0, 0, 0, 0, 1 }, out _, out _, out _));
+        Assert.True(Socks5Udp.IsLocal(IPAddress.Parse("192.168.1.1")));
+        Assert.True(Socks5Udp.IsLocal(IPAddress.Loopback));
+        Assert.False(Socks5Udp.IsLocal(IPAddress.Parse("18.119.193.126")));
+    }
 }

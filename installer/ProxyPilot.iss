@@ -1,5 +1,5 @@
 #define MyAppName "ProxyPilot"
-#define MyAppVersion "1.0.6"
+#define MyAppVersion "1.0.7"
 #define MyAppPublisher "daaag0n00969"
 #define MyAppURL "https://github.com/daaag0n00969/ProxyPilot"
 #define MyAppExeName "ProxyPilot.exe"
@@ -17,7 +17,7 @@ DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 LicenseFile=..\LICENSE
-InfoBeforeFile=..\installer\Welcome.txt
+
 OutputDir=..\artifacts
 OutputBaseFilename=ProxyPilot-Setup-{#MyAppVersion}-x64
 SetupIconFile=..\assets\app.ico
@@ -26,7 +26,7 @@ SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=admin
 UsePreviousAppDir=yes
-DisableDirPage=auto
+DisableDirPage=yes
 CloseApplications=force
 CloseApplicationsFilter=ProxyPilot.exe
 RestartApplications=no
@@ -41,11 +41,11 @@ VersionInfoDescription=Transparent per-process SOCKS/HTTP proxy for Windows
 VersionInfoProductName={#MyAppName}
 
 [Languages]
-Name: "english"; MessagesFile: "compiler:Default.isl"
-Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
+Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"; InfoBeforeFile: "Welcome.ru.txt"
+Name: "english"; MessagesFile: "compiler:Default.isl"; InfoBeforeFile: "Welcome.txt"
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checkedonce
 
 [Files]
 Source: "..\artifacts\publish\ProxyPilot.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -59,7 +59,7 @@ Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent runascurrentuser
+Filename: "{app}\{#MyAppExeName}"; Parameters: "--start"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [Code]
 function GetPreviousVersion(var Version: String): Boolean;

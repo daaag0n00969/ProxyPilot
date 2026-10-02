@@ -16,7 +16,13 @@ public sealed class DivertEngine : IDisposable
     private IntPtr _networkHandle = new(-1);
     private IntPtr _dnsHandle = new(-1);
     private IntPtr _quicHandle = new(-1);
+    private IntPtr _gameUdpHandle = new(-1);
     private IntPtr _socketHandle = new(-1);
+    private Socks5UdpTunnel? _falloutUdp;
+    private readonly Dictionary<ushort, (int Pid, string Name, long Expires)> _udpOwners = new();
+    private readonly Dictionary<IPEndPoint, (IPAddress Client, ushort Port, uint IfIdx, uint SubIfIdx)> _falloutFlows = new();
+    private readonly object _flowLock = new();
+    private long _unmatchedUdpLog;
     private int _selfPid;
     private bool _running;
 
@@ -52,6 +58,17 @@ public sealed class DivertEngine : IDisposable
 
             _quicHandle = OpenNetwork("outbound and ip and udp.DstPort == 443", "перехват QUIC");
 
+            var falloutProxy = FalloutSocksProxy(profile);
+            if (falloutProxy != null)
+            {
+                var udpFilter = BuildFalloutUdpFilter();
+                _gameUdpHandle = OpenNetwork(udpFilter, "UDP Fallout 76");
+                WinDivertNative.WinDivertSetParam(_gameUdpHandle, WinDivertNative.ParamQueueLength, 8192);
+                WinDivertNative.WinDivertSetParam(_gameUdpHandle, WinDivertNative.ParamQueueSize, 8 * 1024 * 1024);
+                WinDivertNative.WinDivertSetParam(_gameUdpHandle, WinDivertNative.ParamQueueTime, 2000);
+                _falloutUdp = new Socks5UdpTunnel(falloutProxy);
+            }
+
             _socketHandle = WinDivertNative.WinDivertOpen("true", WinDivertNative.LayerSocket, 0,
                 WinDivertNative.FlagSniff | WinDivertNative.FlagRecvOnly);
 
@@ -60,6 +77,11 @@ public sealed class DivertEngine : IDisposable
             if (_profile.DnsViaProxy)
                 _ = Task.Run(() => DnsRecvLoop(_cts.Token));
             _ = Task.Run(() => QuicLoop(_cts.Token));
+            if (!WinDivertNative.IsInvalid(_gameUdpHandle))
+            {
+                _ = Task.Run(() => GameUdpLoop(_cts.Token));
+                _ = Task.Run(() => GameUdpReplyLoop(_cts.Token));
+            }
             if (!WinDivertNative.IsInvalid(_socketHandle))
                 _ = Task.Run(() => SocketLoop(_cts.Token));
         }
@@ -70,7 +92,9 @@ public sealed class DivertEngine : IDisposable
         }
 
         DnsCache.SeedKnownCloud();
-        Emit($"Перехват запущен. build=fast-start релей :{_relay.Port}. Фильтр: {filter}");
+        Emit($"Перехват запущен. build=fo76-udp релей :{_relay.Port}. Фильтр: {filter}");
+        if (_falloutUdp != null)
+            Emit("UDP Fallout 76 идёт через Happ. Остальной UDP напрямую.");
         FileLog.Write("DNS seed steamcloudsweden.blob.core.windows.net -> 20.60.253.225, 20.209.216.97, 20.60.253.129");
         if (_profile.DnsViaProxy && _profile.Proxies.Count > 0)
             _ = Task.Run(() => PrewarmCloudDns(_profile.Proxies, _cts.Token));
@@ -80,9 +104,12 @@ public sealed class DivertEngine : IDisposable
     {
         _running = false;
         try { _cts?.Cancel(); } catch { /* ignore */ }
+        _falloutUdp?.Dispose();
+        _falloutUdp = null;
         Close(ref _networkHandle);
         Close(ref _dnsHandle);
         Close(ref _quicHandle);
+        Close(ref _gameUdpHandle);
         Close(ref _socketHandle);
         _relay?.Dispose();
         _relay = null;
@@ -113,6 +140,36 @@ public sealed class DivertEngine : IDisposable
             parts.Add($"tcp.DstPort != {proxy.Port}");
         parts.Add($"tcp.DstPort != {_relay!.Port}");
         return string.Join(" and ", parts);
+    }
+
+    private string BuildFalloutUdpFilter()
+    {
+        var parts = new List<string>
+        {
+            "outbound", "ip", "udp",
+            "udp.DstPort != 53",
+            "udp.DstPort != 443",
+            "ip.DstAddr != 127.0.0.1"
+        };
+        foreach (var proxy in _profile.Proxies)
+        {
+            if (proxy.Port is not (53 or 443))
+                parts.Add($"udp.DstPort != {proxy.Port}");
+        }
+        return string.Join(" and ", parts);
+    }
+
+    private ProxyServer? FalloutSocksProxy(Profile profile)
+    {
+        var rule = profile.Rules.FirstOrDefault(r =>
+            r.Enabled &&
+            r.Action == RuleAction.Proxy &&
+            r.Applications.Any(a => a.Equals("Fallout76.exe", StringComparison.OrdinalIgnoreCase)));
+        if (rule == null)
+            return null;
+        var hops = new RuleEngine(profile).ResolveHops(rule.ProxyId);
+        var proxy = hops.FirstOrDefault();
+        return proxy is { Type: ProxyType.Socks5 } ? proxy : null;
     }
 
     private void RecvLoop(CancellationToken cancellationToken)
@@ -454,6 +511,122 @@ public sealed class DivertEngine : IDisposable
                 return hops;
         }
         return _profile.Proxies.Take(1).ToList();
+    }
+
+    private void GameUdpLoop(CancellationToken cancellationToken)
+    {
+        var packet = new byte[0xFFFF];
+        while (!cancellationToken.IsCancellationRequested && _running)
+        {
+            var addr = new WinDivertAddress();
+            if (!WinDivertNative.WinDivertRecv(_gameUdpHandle, packet, (uint)packet.Length, out var recvLen, ref addr))
+            {
+                if (cancellationToken.IsCancellationRequested || !_running)
+                    return;
+                continue;
+            }
+
+            var parsed = PacketParser.Parse(packet, (int)recvLen);
+            if (!parsed.Ok || !parsed.IsUdp || parsed.Fragment || !IsFalloutUdp(parsed.SrcPort) || Socks5Udp.IsLocal(parsed.DstAddress))
+            {
+                SendOn(_gameUdpHandle, packet, (int)recvLen, ref addr);
+                continue;
+            }
+
+            var payload = packet.AsSpan(parsed.UdpPayloadOffset, parsed.UdpPayloadLength);
+            if (_falloutUdp == null || !_falloutUdp.TrySend(parsed.DstAddress, parsed.DstPort, payload))
+                continue;
+
+            var remote = new IPEndPoint(parsed.DstAddress, parsed.DstPort);
+            lock (_flowLock)
+            {
+                var known = _falloutFlows.ContainsKey(remote);
+                _falloutFlows[remote] = (parsed.SrcAddress, parsed.SrcPort, addr.IfIdx, addr.SubIfIdx);
+                if (!known)
+                    FileLog.Write($"UDP PROXY Fallout76.exe {parsed.SrcAddress}:{parsed.SrcPort} -> {parsed.DstAddress}:{parsed.DstPort}");
+            }
+        }
+    }
+
+    private void GameUdpReplyLoop(CancellationToken cancellationToken)
+    {
+        var buffer = new byte[0xFFFF];
+        while (!cancellationToken.IsCancellationRequested && _running)
+        {
+            var tunnel = _falloutUdp;
+            if (tunnel == null || !tunnel.IsUp)
+            {
+                Thread.Sleep(50);
+                continue;
+            }
+
+            if (!tunnel.TryReceive(buffer, out var length) || length == 0)
+                continue;
+            if (!Socks5Udp.TryDecode(buffer.AsSpan(0, length), out var source, out var port, out var payloadOffset))
+                continue;
+
+            (IPAddress Client, ushort Port, uint IfIdx, uint SubIfIdx) flow;
+            lock (_flowLock)
+            {
+                if (!_falloutFlows.TryGetValue(new IPEndPoint(source, port), out flow))
+                {
+                    var now = Environment.TickCount64;
+                    if (now - _unmatchedUdpLog > 5000)
+                    {
+                        _unmatchedUdpLog = now;
+                        FileLog.Write($"UDP Fallout 76: ответ {source}:{port} без исходящего потока");
+                    }
+                    continue;
+                }
+            }
+
+            InjectUdpReply(flow.Client, flow.Port, source, (ushort)port, buffer, payloadOffset, length - payloadOffset, flow.IfIdx, flow.SubIfIdx);
+        }
+    }
+
+    private void InjectUdpReply(
+        IPAddress client, ushort clientPort, IPAddress server, ushort serverPort,
+        byte[] payload, int payloadOffset, int payloadLength, uint ifIdx, uint subIfIdx)
+    {
+        var total = 20 + 8 + payloadLength;
+        var packet = new byte[total];
+        packet[0] = 0x45;
+        packet[8] = 64;
+        packet[9] = 17;
+        PacketParser.SetIpLength(packet, total);
+        PacketParser.SetAddresses(packet, server, client);
+        PacketParser.SetUdpPorts(packet, 20, serverPort, clientPort);
+        PacketParser.SetUdpLength(packet, 20, 8 + payloadLength);
+        Buffer.BlockCopy(payload, payloadOffset, packet, 28, payloadLength);
+
+        var addr = new WinDivertAddress { IfIdx = ifIdx, SubIfIdx = subIfIdx };
+        addr.Outbound = false;
+        bool sent;
+        lock (_sendLock)
+        {
+            WinDivertNative.WinDivertHelperCalcChecksums(packet, (uint)total, ref addr, 0);
+            sent = WinDivertNative.WinDivertSend(_gameUdpHandle, packet, (uint)total, out _, ref addr);
+        }
+        if (!sent)
+            FileLog.Write($"UDP inject FAIL win32={Marshal.GetLastWin32Error()} {server}:{serverPort} -> {client}:{clientPort}", true);
+    }
+
+    private bool IsFalloutUdp(ushort localPort)
+    {
+        var now = Environment.TickCount64;
+        lock (_udpOwners)
+        {
+            if (_udpOwners.TryGetValue(localPort, out var hit) && hit.Expires > now && hit.Name != "unknown")
+                return hit.Name.Equals("Fallout76.exe", StringComparison.OrdinalIgnoreCase);
+            if (_udpOwners.Count > 4096)
+                _udpOwners.Clear();
+        }
+
+        var pid = _processes.FindUdpPid(localPort);
+        var name = pid == _selfPid ? "ProxyPilot.exe" : _processes.GetName(pid);
+        lock (_udpOwners)
+            _udpOwners[localPort] = (pid, name, now + (name == "unknown" ? 300 : 2000));
+        return name.Equals("Fallout76.exe", StringComparison.OrdinalIgnoreCase);
     }
 
     private void QuicLoop(CancellationToken cancellationToken)

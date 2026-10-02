@@ -6,9 +6,9 @@
 
 ## Коротко
 
-1. Скачайте setup из [Releases](https://github.com/daaag0n00969/ProxyPilot/releases). Если ProxyPilot уже стоит, установщик обновит его в той же папке и не сотрёт профиль.
-2. В `C:\Program Files\ProxyPilot\` лежит сам **ProxyPilot.exe** (рядом только WinDivert). Отдельного загрузчика больше нет: Касперский помечал его как `Trojan.Win32.Tasker.gen`.
-3. Запустите Happ (SOCKS5 на `127.0.0.1:10808`), затем ProxyPilot и нажмите **Запустить**.
+1. Включите Happ (SOCKS5 на `127.0.0.1:10808`).
+2. Скачайте setup из [Releases](https://github.com/daaag0n00969/ProxyPilot/releases) и запустите его. Отдельный .NET не нужен. Если ProxyPilot уже стоит, установщик обновит его в той же папке и не сотрёт профиль.
+3. Программа сама откроется и включит перехват. Ярлык будет на рабочем столе и в меню Пуск. В папке лежит сам **ProxyPilot.exe** (рядом только WinDivert).
 
 Steam и Grok Bot — через Happ. Сами Happ / xray / grok.exe — напрямую.
 

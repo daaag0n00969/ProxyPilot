@@ -64,6 +64,28 @@ public class RuleEngineTests
     }
 
     [Fact]
+    public void Fallout76_GoesThroughProxy_OtherGamesStayDirect()
+    {
+        var engine = new RuleEngine(Profile.CreateDefault());
+        var fallout = engine.Evaluate("Fallout76.exe", IPAddress.Parse("18.119.193.126"), 443);
+        Assert.Equal(RuleAction.Proxy, fallout.Action);
+        Assert.Equal("Fallout 76 via Happ", fallout.Rule.Name);
+        Assert.Equal(RuleAction.Direct, engine.Evaluate("notepad.exe", IPAddress.Parse("18.119.193.126"), 443).Action);
+        Assert.Equal(RuleAction.Proxy, engine.Evaluate("steam.exe", IPAddress.Parse("1.1.1.1"), 443).Action);
+    }
+
+    [Fact]
+    public void MigrateFallout76_InsertsRuleOnce()
+    {
+        var profile = Profile.CreateDefault();
+        profile.Rules.RemoveAll(r => r.Applications.Any(a => a.Equals("Fallout76.exe", StringComparison.OrdinalIgnoreCase)));
+        ProfileStore.MigrateFallout76(profile);
+        ProfileStore.MigrateFallout76(profile);
+        Assert.Equal(1, profile.Rules.Count(r => r.Name == "Fallout 76 via Happ"));
+        Assert.Equal("Default", profile.Rules[^1].Name);
+    }
+
+    [Fact]
     public void GrokBot_QuotedName_Matches()
     {
         var engine = new RuleEngine(Profile.CreateDefault());

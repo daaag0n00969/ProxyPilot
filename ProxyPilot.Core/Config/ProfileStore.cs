@@ -58,6 +58,7 @@ public static class ProfileStore
         MigrateVsCodeChatGpt(profile);
         MigrateNvidiaApp(profile);
         MigrateConnectivity(profile);
+        MigrateFallout76(profile);
         return profile;
     }
 
@@ -152,6 +153,22 @@ public static class ProfileStore
                 "dns.msftncsi.com",
                 "www.msftncsi.com"
             ]
+        });
+    }
+
+    internal static void MigrateFallout76(Profile profile)
+    {
+        if (profile.Rules.Any(r => r.Applications.Any(a => a.Equals("Fallout76.exe", StringComparison.OrdinalIgnoreCase))))
+            return;
+        var proxyId = profile.Proxies.FirstOrDefault(p => p.Type == ProxyType.Socks5)?.Id
+                      ?? profile.Proxies.FirstOrDefault()?.Id;
+        var insertAt = Math.Max(0, profile.Rules.Count - 1);
+        profile.Rules.Insert(insertAt, new ProfileRule
+        {
+            Name = "Fallout 76 via Happ",
+            Action = RuleAction.Proxy,
+            ProxyId = proxyId,
+            Applications = ["Fallout76.exe"]
         });
     }
 

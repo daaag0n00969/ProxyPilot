@@ -52,6 +52,7 @@ public sealed class Profile
             DnsViaProxy = true,
             UdpMode = UdpMode.Bypass,
             LoopDetection = true,
+            AutoStart = true,
             Proxies = [happ],
             Rules =
             [
@@ -110,6 +111,13 @@ public sealed class Profile
                         "codex-code-mode-host.exe",
                         "codex-command-runner.exe"
                     ]
+                },
+                new ProfileRule
+                {
+                    Name = "Fallout 76 via Happ",
+                    Action = RuleAction.Proxy,
+                    ProxyId = happ.Id,
+                    Applications = ["Fallout76.exe"]
                 },
                 new ProfileRule
                 {

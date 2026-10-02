@@ -81,7 +81,7 @@ flowchart LR
 
 ## Install
 
-Download **ProxyPilot-Setup-*-x64.exe** from [Releases](https://github.com/daaag0n00969/ProxyPilot/releases). The setup is self-contained (no separate .NET install), requires Administrator, and puts shortcuts in the Start menu. Installing a newer setup over an older one upgrades in the same folder and keeps `%AppData%\ProxyPilot`.
+Download **ProxyPilot-Setup-*-x64.exe** from [Releases](https://github.com/daaag0n00969/ProxyPilot/releases). The setup is self-contained (no separate .NET install) and requires Administrator. It installs to `C:\Program Files\ProxyPilot`, adds a desktop shortcut, and launches the app with interception already on. A newer setup upgrades an older one in the same folder and keeps `%AppData%\ProxyPilot`. Start Happ (`127.0.0.1:10808`) before you click through the wizard.
 
 After install, the folder looks like this:
 

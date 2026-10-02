@@ -14,10 +14,12 @@ internal sealed class MainForm : Form
     private readonly ToolStripStatusLabel _counts = new("");
     private readonly Dictionary<Guid, DataGridViewRow> _rows = [];
     private readonly Button _start = new();
+    private readonly bool _startOnLaunch;
     private Profile _profile;
 
-    public MainForm()
+    public MainForm(bool startOnLaunch = false)
     {
+        _startOnLaunch = startOnLaunch;
         _profile = ProfileStore.LoadOrCreate();
         Text = "ProxyPilot";
         try
@@ -95,7 +97,7 @@ internal sealed class MainForm : Form
         {
             if (!IsAdmin())
                 OfferElevation();
-            else if (_profile.AutoStart)
+            else if (_startOnLaunch || _profile.AutoStart)
                 StartEngine();
             UpdateCounts();
         };
@@ -145,7 +147,7 @@ internal sealed class MainForm : Form
             "Как Proxifier: перехватывает TCP приложений, которые сами прокси не умеют, " +
             "и отправляет выбранные процессы в SOCKS5 / SOCKS4 / HTTP CONNECT.\n\n" +
             "Ваш профиль Happ (127.0.0.1:10808) подхватывается автоматически.\n" +
-            "Нужны права администратора. UDP по умолчанию идёт напрямую.",
+            "Нужны права администратора. UDP Fallout 76 идёт через Happ, остальной UDP напрямую.",
             "ProxyPilot", MessageBoxButtons.OK, MessageBoxIcon.Information));
         menu.Items.AddRange(new ToolStripItem[] { file, profile, actions, help });
         return menu;
@@ -320,7 +322,8 @@ internal sealed class MainForm : Form
             Process.Start(new ProcessStartInfo(Environment.ProcessPath!)
             {
                 UseShellExecute = true,
-                Verb = "runas"
+                Verb = "runas",
+                Arguments = _startOnLaunch ? "--start" : ""
             });
             _tray.Visible = false;
             Close();

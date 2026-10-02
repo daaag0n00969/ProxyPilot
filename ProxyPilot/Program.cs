@@ -5,9 +5,10 @@ namespace ProxyPilot;
 static class Program
 {
     [STAThread]
-    static void Main()
+    static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
-        Application.Run(new MainForm());
+        var startNow = args.Any(a => a.Equals("--start", StringComparison.OrdinalIgnoreCase));
+        Application.Run(new MainForm(startNow));
     }
 }
