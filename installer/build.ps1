@@ -16,7 +16,7 @@ dotnet publish (Join-Path $Root "ProxyPilot\ProxyPilot.csproj") `
   -p:EnableCompressionInSingleFile=true `
   -p:DebugType=none `
   -p:DebugSymbols=false `
-  -p:Version=1.0.7 `
+  -p:Version=1.0.8 `
   -o $Publish
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed" }
 

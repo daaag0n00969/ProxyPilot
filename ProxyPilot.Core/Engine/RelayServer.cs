@@ -106,9 +106,18 @@ internal sealed class RelayServer : IDisposable
             }
 
             var dest = new IPEndPoint(entry.DestAddress, entry.DestPort);
-            var target = string.IsNullOrWhiteSpace(entry.Hostname)
+            var hostname = entry.Hostname;
+            byte[] prefix = [];
+            if (string.IsNullOrWhiteSpace(hostname) && entry.DestPort == 443 && EditorProcesses.UsesSni(entry.ProcessName))
+            {
+                (hostname, prefix) = await TlsSni.PeekAsync(client.GetStream(), cancellationToken).ConfigureAwait(false);
+                if (!string.IsNullOrWhiteSpace(hostname))
+                    FileLog.Write($"TLS SNI {entry.ProcessName} {hostname} для {dest}");
+            }
+
+            var target = string.IsNullOrWhiteSpace(hostname)
                 ? $"{entry.DestAddress}:{entry.DestPort}"
-                : $"{entry.Hostname} ({entry.DestAddress}):{entry.DestPort}";
+                : $"{hostname} ({entry.DestAddress}):{entry.DestPort}";
             ConnectionEvent? ev = new ConnectionEvent
             {
                 Id = entry.ConnectionId,
@@ -127,12 +136,15 @@ internal sealed class RelayServer : IDisposable
             {
                 client.NoDelay = true;
                 var sw = System.Diagnostics.Stopwatch.StartNew();
-                FileLog.Write($"SOCKS start {entry.ProcessName} CONNECT {entry.Hostname ?? dest.Address.ToString()}:{dest.Port} via {entry.Hops[0].Display}");
-                remote = await ProxyClient.ConnectAsync(entry.Hops, dest, cancellationToken, hostname: entry.Hostname).ConfigureAwait(false);
+                FileLog.Write($"SOCKS start {entry.ProcessName} CONNECT {hostname ?? dest.Address.ToString()}:{dest.Port} via {entry.Hops[0].Display}");
+                remote = await ProxyClient.ConnectAsync(entry.Hops, dest, cancellationToken, hostname: hostname).ConfigureAwait(false);
                 remote.NoDelay = true;
-                FileLog.Write($"SOCKS ok {entry.ProcessName} {entry.Hostname ?? dest.ToString()} in {sw.ElapsedMilliseconds}ms");
+                FileLog.Write($"SOCKS ok {entry.ProcessName} {hostname ?? dest.ToString()} in {sw.ElapsedMilliseconds}ms");
                 ev.Status = "Прокси";
                 ConnectionChanged?.Invoke(ev);
+
+                if (prefix.Length > 0)
+                    await remote.GetStream().WriteAsync(prefix, cancellationToken).ConfigureAwait(false);
 
                 using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                 var toRemote = CopyAsync(client.GetStream(), remote.GetStream(), n =>

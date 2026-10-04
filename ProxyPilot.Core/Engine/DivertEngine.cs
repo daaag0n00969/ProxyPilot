@@ -23,6 +23,7 @@ public sealed class DivertEngine : IDisposable
     private readonly Dictionary<IPEndPoint, (IPAddress Client, ushort Port, uint IfIdx, uint SubIfIdx)> _falloutFlows = new();
     private readonly object _flowLock = new();
     private long _unmatchedUdpLog;
+    private long _quicRejectLog;
     private int _selfPid;
     private bool _running;
 
@@ -92,7 +93,7 @@ public sealed class DivertEngine : IDisposable
         }
 
         DnsCache.SeedKnownCloud();
-        Emit($"Перехват запущен. build=fo76-udp релей :{_relay.Port}. Фильтр: {filter}");
+        Emit($"Перехват запущен. build=sni-quic релей :{_relay.Port}. Фильтр: {filter}");
         if (_falloutUdp != null)
             Emit("UDP Fallout 76 идёт через Happ. Остальной UDP напрямую.");
         FileLog.Write("DNS seed steamcloudsweden.blob.core.windows.net -> 20.60.253.225, 20.209.216.97, 20.60.253.129");
@@ -652,9 +653,38 @@ public sealed class DivertEngine : IDisposable
             var pid = _processes.FindUdpPid(parsed.SrcPort);
             var name = pid == _selfPid ? "ProxyPilot.exe" : _processes.GetName(pid);
             if (pid != _selfPid && _rules.ProcessHasProxyRule(name))
+            {
+                if (EditorProcesses.RejectQuic(name))
+                    RejectQuic(packet, (int)recvLen, parsed, addr);
                 continue;
+            }
 
             SendOn(_quicHandle, packet, (int)recvLen, ref addr);
+        }
+    }
+
+    private void RejectQuic(byte[] original, int length, ParsedPacket parsed, WinDivertAddress addr)
+    {
+        var packet = IcmpPortUnreachable.Build(original, length, parsed);
+        if (packet == null)
+            return;
+
+        addr.Outbound = false;
+        bool sent;
+        lock (_sendLock)
+        {
+            WinDivertNative.WinDivertHelperCalcChecksums(packet, (uint)packet.Length, ref addr, 0);
+            sent = WinDivertNative.WinDivertSend(_quicHandle, packet, (uint)packet.Length, out _, ref addr);
+        }
+
+        var now = Environment.TickCount64;
+        if (now - _quicRejectLog > 10000)
+        {
+            _quicRejectLog = now;
+            var note = sent
+                ? $"QUIC reject {parsed.SrcAddress}:{parsed.SrcPort} -> {parsed.DstAddress}:{parsed.DstPort}"
+                : $"QUIC reject FAIL win32={Marshal.GetLastWin32Error()} {parsed.DstAddress}:{parsed.DstPort}";
+            FileLog.Write(note, !sent);
         }
     }
 
