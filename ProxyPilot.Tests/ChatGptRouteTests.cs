@@ -34,6 +34,8 @@ public class ChatGptRouteTests
     public void QuicReject_IsOnlyTheChatEditors()
     {
         Assert.True(EditorProcesses.RejectQuic("Code.exe"));
+        Assert.True(EditorProcesses.RejectQuic("ChatGPT.exe"));
+        Assert.True(EditorProcesses.UsesSni("ChatGPT.exe"));
         Assert.True(EditorProcesses.RejectQuic("Cursor.exe"));
         Assert.True(EditorProcesses.UsesSni("codex-code-mode-host.exe"));
         Assert.False(EditorProcesses.RejectQuic("steam.exe"));

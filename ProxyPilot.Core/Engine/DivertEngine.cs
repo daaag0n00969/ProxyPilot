@@ -93,7 +93,7 @@ public sealed class DivertEngine : IDisposable
         }
 
         DnsCache.SeedKnownCloud();
-        Emit($"Перехват запущен. build=sni-quic релей :{_relay.Port}. Фильтр: {filter}");
+        Emit($"Перехват запущен. build=chatgpt-sni релей :{_relay.Port}. Фильтр: {filter}");
         if (_falloutUdp != null)
             Emit("UDP Fallout 76 идёт через Happ. Остальной UDP напрямую.");
         FileLog.Write("DNS seed steamcloudsweden.blob.core.windows.net -> 20.60.253.225, 20.209.216.97, 20.60.253.129");
@@ -736,6 +736,7 @@ public sealed class DivertEngine : IDisposable
                           || name.Contains("steam", StringComparison.OrdinalIgnoreCase)
                           || name.Contains("Code", StringComparison.OrdinalIgnoreCase)
                           || name.Contains("codex", StringComparison.OrdinalIgnoreCase)
+                          || name.Contains("ChatGPT", StringComparison.OrdinalIgnoreCase)
                           || name.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase)
                           || name.Equals("nvcontainer.exe", StringComparison.OrdinalIgnoreCase)
                           || DnsCache.IsCloudHost(host);

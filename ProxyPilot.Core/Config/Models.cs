@@ -109,7 +109,8 @@ public sealed class Profile
                         "Cursor.exe",
                         "codex.exe",
                         "codex-code-mode-host.exe",
-                        "codex-command-runner.exe"
+                        "codex-command-runner.exe",
+                        "ChatGPT.exe"
                     ]
                 },
                 new ProfileRule

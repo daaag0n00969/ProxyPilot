@@ -60,7 +60,24 @@ public class RuleEngineTests
         var engine = new RuleEngine(Profile.CreateDefault());
         Assert.Equal(RuleAction.Proxy, engine.Evaluate("Code.exe", IPAddress.Parse("1.1.1.1"), 443).Action);
         Assert.Equal(RuleAction.Proxy, engine.Evaluate("codex.exe", IPAddress.Parse("1.1.1.1"), 443).Action);
-        Assert.Equal("VS Code / ChatGPT via Happ", engine.Evaluate("Code.exe", IPAddress.Parse("1.1.1.1"), 443).Rule.Name);
+        Assert.Equal(RuleAction.Proxy, engine.Evaluate("ChatGPT.exe", IPAddress.Parse("1.1.1.1"), 443).Action);
+        Assert.Equal("VS Code / ChatGPT via Happ", engine.Evaluate("ChatGPT.exe", IPAddress.Parse("1.1.1.1"), 443).Rule.Name);
+        Assert.Equal(RuleAction.Direct, engine.Evaluate("ChatGPT.exe", IPAddress.Loopback, 10809).Action);
+        Assert.Equal(RuleAction.Direct, engine.Evaluate("codex-windows-sandbox-service.exe", IPAddress.Parse("1.1.1.1"), 443).Action);
+    }
+
+    [Fact]
+    public void MigrateVsCodeChatGpt_AddsDesktopAppOnce()
+    {
+        var profile = Profile.CreateDefault();
+        var rule = profile.Rules.Single(r => r.Name == "VS Code / ChatGPT via Happ");
+        rule.Applications.RemoveAll(a => a.Equals("ChatGPT.exe", StringComparison.OrdinalIgnoreCase));
+        ProfileStore.MigrateVsCodeChatGpt(profile);
+        ProfileStore.MigrateVsCodeChatGpt(profile);
+        Assert.Equal(1, rule.Applications.Count(a => a.Equals("ChatGPT.exe", StringComparison.OrdinalIgnoreCase)));
+        Assert.Equal("Default", profile.Rules[^1].Name);
+        Assert.DoesNotContain(profile.Rules.Where(r => r.Name != rule.Name).SelectMany(r => r.Applications),
+            a => a.Equals("ChatGPT.exe", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

@@ -15,6 +15,7 @@ internal static class EditorProcesses
             || processName.Equals("Cursor.exe", StringComparison.OrdinalIgnoreCase)
             || processName.Equals("codex.exe", StringComparison.OrdinalIgnoreCase)
             || processName.Equals("codex-code-mode-host.exe", StringComparison.OrdinalIgnoreCase)
-            || processName.Equals("codex-command-runner.exe", StringComparison.OrdinalIgnoreCase);
+            || processName.Equals("codex-command-runner.exe", StringComparison.OrdinalIgnoreCase)
+            || processName.Equals("ChatGPT.exe", StringComparison.OrdinalIgnoreCase);
     }
 }

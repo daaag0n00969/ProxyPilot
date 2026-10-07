@@ -90,8 +90,15 @@ public static class ProfileStore
 
     internal static void MigrateVsCodeChatGpt(Profile profile)
     {
-        if (profile.Rules.Any(r => r.Applications.Any(a => a.Equals("Code.exe", StringComparison.OrdinalIgnoreCase))))
+        var existing = profile.Rules.FirstOrDefault(r =>
+            r.Applications.Any(a => a.Equals("Code.exe", StringComparison.OrdinalIgnoreCase)));
+        if (existing is not null)
+        {
+            if (!existing.Applications.Any(a => a.Equals("ChatGPT.exe", StringComparison.OrdinalIgnoreCase)))
+                existing.Applications.Add("ChatGPT.exe");
             return;
+        }
+
         var proxyId = profile.Proxies.FirstOrDefault()?.Id;
         var insertAt = Math.Max(0, profile.Rules.Count - 1);
         profile.Rules.Insert(insertAt, new ProfileRule
@@ -106,7 +113,8 @@ public static class ProfileStore
                 "Cursor.exe",
                 "codex.exe",
                 "codex-code-mode-host.exe",
-                "codex-command-runner.exe"
+                "codex-command-runner.exe",
+                "ChatGPT.exe"
             ]
         });
     }
