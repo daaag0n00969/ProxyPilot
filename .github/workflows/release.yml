@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - installer/ProxyPilot.iss
+      - installer/build.ps1
+      - ProxyPilot/ProxyPilot.csproj
+      - .github/workflows/release.yml
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Test
+        run: dotnet test ProxyPilot.slnx -c Release --nologo
+
+      - name: Install Inno Setup
+        run: choco install innosetup --yes --no-progress
+
+      - name: Build setup
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File installer\build.ps1
+
+      - name: Publish release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $PSNativeCommandUseErrorActionPreference = $false
+          $version = [regex]::Match((Get-Content -Raw installer\ProxyPilot.iss), '#define MyAppVersion "([^"]+)"').Groups[1].Value
+          if (-not $version) { throw 'version missing' }
+          $tag = "v$version"
+          gh release view $tag --json tagName --jq .tagName *> $null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Release $tag already exists"
+            exit 0
+          }
+          $notes = @"
+          Патч Neverwinter, Final Fantasy XIV и Bitcraft идут через Happ.
+
+          ## Что изменилось
+
+          - Neverwinter: `Neverwinter.exe` и `GameClient.exe` ходят в Happ только на порт 80. Игровые порты остаются прямыми. Старые профили получают это правило сами.
+          - Final Fantasy XIV: лаунчер и клиент отправляют TCP через Happ. Игровой UDP `ffxiv_dx11.exe` и `ffxiv_dx9.exe` тоже идёт через Happ.
+          - Bitcraft: TCP и UDP `BitCraft.exe` идут через Happ. Прямые сокеты к серверам игры туннель не трогает, поэтому смена сервера Happ их не спасает.
+          - Остальные программы, Steam, NVIDIA и Fallout 76 не менялись.
+
+          ## Установка
+
+          Один файл, Windows 10/11 x64, отдельный .NET не нужен. Поверх старой версии ставится в ту же папку и сохраняет `%AppData%\ProxyPilot`.
+
+          1. Сначала запустите Happ.
+          2. Запустите установщик. SmartScreen покажет «Неизвестный издатель» — нажмите «Выполнить в любом случае».
+          3. На рабочем столе появится ярлык, перехват включится сам.
+          4. Если Касперский ругается на WinDivert, добавьте в исключения `C:\Program Files\ProxyPilot`. Отключать SmartScreen не нужно.
+
+          ## What changed
+
+          Neverwinter's launcher and GameClient use Happ only for port 80, so the game ports stay direct. Existing profiles gain that rule on the next start. Final Fantasy XIV's launcher and client send TCP through Happ, and world UDP from ffxiv_dx11.exe and ffxiv_dx9.exe goes through Happ too. Bitcraft's TCP and UDP go through Happ: direct sockets to the game servers stay outside the tunnel, so changing the Happ server does not move them. Steam, NVIDIA, Fallout 76, and other apps are unchanged.
+
+          The setup is one file for Windows 10/11 x64, with no separate .NET install. It upgrades an existing ProxyPilot in place and keeps `%AppData%\ProxyPilot`. Start Happ first. On the SmartScreen unknown-publisher prompt, choose Run anyway. If Kaspersky flags WinDivert, exclude `C:\Program Files\ProxyPilot`.
+          "@
+          $notes = ($notes -split "`n" | ForEach-Object { $_.TrimStart() }) -join "`n"
+          $path = Join-Path $env:RUNNER_TEMP 'release.md'
+          Set-Content -Path $path -Value $notes -Encoding utf8
+          $asset = "artifacts\ProxyPilot-Setup-$version-x64.exe"
+          if (-not (Test-Path $asset)) { throw "missing $asset" }
+          gh release create $tag $asset --title "ProxyPilot $version" --notes-file $path --target $env:GITHUB_SHA
