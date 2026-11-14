@@ -147,7 +147,7 @@ internal sealed class MainForm : Form
             "Как Proxifier: перехватывает TCP приложений, которые сами прокси не умеют, " +
             "и отправляет выбранные процессы в SOCKS5 / SOCKS4 / HTTP CONNECT.\n\n" +
             "Ваш профиль Happ (127.0.0.1:10808) подхватывается автоматически.\n" +
-            "Нужны права администратора. UDP Fallout 76 идёт через Happ, остальной UDP напрямую.",
+            "Нужны права администратора. UDP Fallout 76, Final Fantasy XIV и Bitcraft идёт через Happ, остальной UDP напрямую.",
             "ProxyPilot", MessageBoxButtons.OK, MessageBoxIcon.Information));
         menu.Items.AddRange(new ToolStripItem[] { file, profile, actions, help });
         return menu;

@@ -59,7 +59,7 @@ public sealed class DivertEngine : IDisposable
 
             _quicHandle = OpenNetwork("outbound and ip and udp.DstPort == 443", "перехват QUIC");
 
-            var falloutProxy = FalloutSocksProxy(profile);
+            var falloutProxy = GameSocksProxy(profile);
             if (falloutProxy != null)
             {
                 var udpFilter = BuildFalloutUdpFilter();
@@ -93,9 +93,9 @@ public sealed class DivertEngine : IDisposable
         }
 
         DnsCache.SeedKnownCloud();
-        Emit($"Перехват запущен. build=chatgpt-sni релей :{_relay.Port}. Фильтр: {filter}");
+        Emit($"Перехват запущен. build=bitcraft релей :{_relay.Port}. Фильтр: {filter}");
         if (_falloutUdp != null)
-            Emit("UDP Fallout 76 идёт через Happ. Остальной UDP напрямую.");
+            Emit("UDP Fallout 76, Final Fantasy XIV и Bitcraft идёт через Happ. Остальной UDP напрямую.");
         FileLog.Write("DNS seed steamcloudsweden.blob.core.windows.net -> 20.60.253.225, 20.209.216.97, 20.60.253.129");
         if (_profile.DnsViaProxy && _profile.Proxies.Count > 0)
             _ = Task.Run(() => PrewarmCloudDns(_profile.Proxies, _cts.Token));
@@ -160,12 +160,12 @@ public sealed class DivertEngine : IDisposable
         return string.Join(" and ", parts);
     }
 
-    private ProxyServer? FalloutSocksProxy(Profile profile)
+    private ProxyServer? GameSocksProxy(Profile profile)
     {
         var rule = profile.Rules.FirstOrDefault(r =>
             r.Enabled &&
             r.Action == RuleAction.Proxy &&
-            r.Applications.Any(a => a.Equals("Fallout76.exe", StringComparison.OrdinalIgnoreCase)));
+            r.Applications.Any(a => IsRelayedGame(a)));
         if (rule == null)
             return null;
         var hops = new RuleEngine(profile).ResolveHops(rule.ProxyId);
@@ -528,7 +528,7 @@ public sealed class DivertEngine : IDisposable
             }
 
             var parsed = PacketParser.Parse(packet, (int)recvLen);
-            if (!parsed.Ok || !parsed.IsUdp || parsed.Fragment || !IsFalloutUdp(parsed.SrcPort) || Socks5Udp.IsLocal(parsed.DstAddress))
+            if (!parsed.Ok || !parsed.IsUdp || parsed.Fragment || !TryRelayedGame(parsed.SrcPort, out var game) || Socks5Udp.IsLocal(parsed.DstAddress))
             {
                 SendOn(_gameUdpHandle, packet, (int)recvLen, ref addr);
                 continue;
@@ -544,7 +544,7 @@ public sealed class DivertEngine : IDisposable
                 var known = _falloutFlows.ContainsKey(remote);
                 _falloutFlows[remote] = (parsed.SrcAddress, parsed.SrcPort, addr.IfIdx, addr.SubIfIdx);
                 if (!known)
-                    FileLog.Write($"UDP PROXY Fallout76.exe {parsed.SrcAddress}:{parsed.SrcPort} -> {parsed.DstAddress}:{parsed.DstPort}");
+                    FileLog.Write($"UDP PROXY {game} {parsed.SrcAddress}:{parsed.SrcPort} -> {parsed.DstAddress}:{parsed.DstPort}");
             }
         }
     }
@@ -612,22 +612,35 @@ public sealed class DivertEngine : IDisposable
             FileLog.Write($"UDP inject FAIL win32={Marshal.GetLastWin32Error()} {server}:{serverPort} -> {client}:{clientPort}", true);
     }
 
-    private bool IsFalloutUdp(ushort localPort)
+    private bool TryRelayedGame(ushort localPort, out string name)
     {
         var now = Environment.TickCount64;
         lock (_udpOwners)
         {
             if (_udpOwners.TryGetValue(localPort, out var hit) && hit.Expires > now && hit.Name != "unknown")
-                return hit.Name.Equals("Fallout76.exe", StringComparison.OrdinalIgnoreCase);
+            {
+                name = hit.Name;
+                return IsRelayedGame(name);
+            }
             if (_udpOwners.Count > 4096)
                 _udpOwners.Clear();
         }
 
         var pid = _processes.FindUdpPid(localPort);
-        var name = pid == _selfPid ? "ProxyPilot.exe" : _processes.GetName(pid);
+        name = pid == _selfPid ? "ProxyPilot.exe" : _processes.GetName(pid);
         lock (_udpOwners)
             _udpOwners[localPort] = (pid, name, now + (name == "unknown" ? 300 : 2000));
-        return name.Equals("Fallout76.exe", StringComparison.OrdinalIgnoreCase);
+        return IsRelayedGame(name);
+    }
+
+    private static bool IsRelayedGame(string? name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return false;
+        return name.Equals("Fallout76.exe", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("ffxiv_dx11.exe", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("ffxiv_dx9.exe", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("BitCraft.exe", StringComparison.OrdinalIgnoreCase);
     }
 
     private void QuicLoop(CancellationToken cancellationToken)

@@ -59,6 +59,9 @@ public static class ProfileStore
         MigrateNvidiaApp(profile);
         MigrateConnectivity(profile);
         MigrateFallout76(profile);
+        MigrateNeverwinterPatch(profile);
+        MigrateFfxiv(profile);
+        MigrateBitcraft(profile);
         return profile;
     }
 
@@ -177,6 +180,77 @@ public static class ProfileStore
             Action = RuleAction.Proxy,
             ProxyId = proxyId,
             Applications = ["Fallout76.exe"]
+        });
+    }
+
+    internal static void MigrateNeverwinterPatch(Profile profile)
+    {
+        var existing = profile.Rules.FirstOrDefault(r =>
+            r.Applications.Any(a => a.Equals("Neverwinter.exe", StringComparison.OrdinalIgnoreCase)));
+        if (existing is not null)
+        {
+            if (!existing.Targets.Any(t => t.Equals("*:80", StringComparison.OrdinalIgnoreCase)))
+            {
+                existing.Targets.Clear();
+                existing.Targets.Add("*:80");
+            }
+            if (!existing.Applications.Any(a => a.Equals("GameClient.exe", StringComparison.OrdinalIgnoreCase)))
+                existing.Applications.Add("GameClient.exe");
+            return;
+        }
+
+        var proxyId = profile.Proxies.FirstOrDefault(p => p.Type == ProxyType.Socks5)?.Id
+                      ?? profile.Proxies.FirstOrDefault()?.Id;
+        var insertAt = Math.Max(0, profile.Rules.Count - 1);
+        profile.Rules.Insert(insertAt, new ProfileRule
+        {
+            Name = "Neverwinter patch via Happ",
+            Action = RuleAction.Proxy,
+            ProxyId = proxyId,
+            Applications = ["Neverwinter.exe", "GameClient.exe"],
+            Targets = ["*:80"]
+        });
+    }
+
+    internal static void MigrateBitcraft(Profile profile)
+    {
+        if (profile.Rules.Any(r => r.Applications.Any(a => a.Equals("BitCraft.exe", StringComparison.OrdinalIgnoreCase))))
+            return;
+        var proxyId = profile.Proxies.FirstOrDefault(p => p.Type == ProxyType.Socks5)?.Id
+                      ?? profile.Proxies.FirstOrDefault()?.Id;
+        var insertAt = Math.Max(0, profile.Rules.Count - 1);
+        profile.Rules.Insert(insertAt, new ProfileRule
+        {
+            Name = "Bitcraft via Happ",
+            Action = RuleAction.Proxy,
+            ProxyId = proxyId,
+            Applications = ["BitCraft.exe"]
+        });
+    }
+
+    internal static void MigrateFfxiv(Profile profile)
+    {
+        if (profile.Rules.Any(r => r.Applications.Any(a =>
+                a.Equals("ffxiv_dx11.exe", StringComparison.OrdinalIgnoreCase) ||
+                a.Equals("ffxivlauncher64.exe", StringComparison.OrdinalIgnoreCase))))
+            return;
+        var proxyId = profile.Proxies.FirstOrDefault(p => p.Type == ProxyType.Socks5)?.Id
+                      ?? profile.Proxies.FirstOrDefault()?.Id;
+        var insertAt = Math.Max(0, profile.Rules.Count - 1);
+        profile.Rules.Insert(insertAt, new ProfileRule
+        {
+            Name = "Final Fantasy XIV via Happ",
+            Action = RuleAction.Proxy,
+            ProxyId = proxyId,
+            Applications =
+            [
+                "ffxivlauncher64.exe",
+                "ffxivlauncher.exe",
+                "ffxivboot64.exe",
+                "ffxivboot.exe",
+                "ffxiv_dx11.exe",
+                "ffxiv_dx9.exe"
+            ]
         });
     }
 

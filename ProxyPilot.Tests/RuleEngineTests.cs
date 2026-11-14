@@ -81,6 +81,81 @@ public class RuleEngineTests
     }
 
     [Fact]
+    public void NeverwinterPatch_GoesThroughProxy_GamePortsStayDirect()
+    {
+        var engine = new RuleEngine(Profile.CreateDefault());
+        var download = engine.Evaluate("Neverwinter.exe", IPAddress.Parse("2.22.50.108"), 80);
+        Assert.Equal(RuleAction.Proxy, download.Action);
+        Assert.Equal("Neverwinter patch via Happ", download.Rule.Name);
+        Assert.Equal(RuleAction.Direct, engine.Evaluate("Neverwinter.exe", IPAddress.Parse("208.95.184.162"), 7004).Action);
+        Assert.Equal(RuleAction.Direct, engine.Evaluate("notepad.exe", IPAddress.Parse("2.22.50.108"), 80).Action);
+    }
+
+    [Fact]
+    public void MigrateNeverwinterPatch_InsertsRuleOnce()
+    {
+        var profile = Profile.CreateDefault();
+        profile.Rules.RemoveAll(r => r.Applications.Any(a => a.Equals("Neverwinter.exe", StringComparison.OrdinalIgnoreCase)));
+        ProfileStore.MigrateNeverwinterPatch(profile);
+        var rule = profile.Rules.Single(r => r.Applications.Any(a => a.Equals("Neverwinter.exe", StringComparison.OrdinalIgnoreCase)));
+        rule.Targets.Clear();
+        rule.Targets.Add("*.nwhttppatch.crypticstudios.com");
+        rule.Applications.RemoveAll(a => a.Equals("GameClient.exe", StringComparison.OrdinalIgnoreCase));
+        ProfileStore.MigrateNeverwinterPatch(profile);
+        Assert.Equal(["*:80"], rule.Targets);
+        Assert.Contains(rule.Applications, a => a.Equals("GameClient.exe", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal("Default", profile.Rules[^1].Name);
+    }
+
+    [Fact]
+    public void Bitcraft_GoesThroughProxy_OtherGamesStayDirect()
+    {
+        var engine = new RuleEngine(Profile.CreateDefault());
+        var game = engine.Evaluate("BitCraft.exe", IPAddress.Parse("125.253.87.85"), 443);
+        Assert.Equal(RuleAction.Proxy, game.Action);
+        Assert.Equal("Bitcraft via Happ", game.Rule.Name);
+        Assert.Equal(RuleAction.Direct, engine.Evaluate("BitCraft.exe", IPAddress.Loopback, 10809).Action);
+        Assert.Equal(RuleAction.Direct, engine.Evaluate("notepad.exe", IPAddress.Parse("125.253.87.85"), 443).Action);
+    }
+
+    [Fact]
+    public void MigrateBitcraft_InsertsRuleOnce()
+    {
+        var profile = Profile.CreateDefault();
+        profile.Rules.RemoveAll(r => r.Applications.Any(a => a.Equals("BitCraft.exe", StringComparison.OrdinalIgnoreCase)));
+        ProfileStore.MigrateBitcraft(profile);
+        ProfileStore.MigrateBitcraft(profile);
+        Assert.Equal(1, profile.Rules.Count(r => r.Name == "Bitcraft via Happ"));
+        Assert.Equal("Default", profile.Rules[^1].Name);
+    }
+
+    [Fact]
+    public void Ffxiv_GoesThroughProxy_OtherGamesStayDirect()
+    {
+        var engine = new RuleEngine(Profile.CreateDefault());
+        var launcher = engine.Evaluate("ffxivlauncher64.exe", IPAddress.Parse("184.24.77.141"), 443);
+        var game = engine.Evaluate("ffxiv_dx11.exe", IPAddress.Parse("204.2.229.10"), 54992);
+        Assert.Equal(RuleAction.Proxy, launcher.Action);
+        Assert.Equal("Final Fantasy XIV via Happ", launcher.Rule.Name);
+        Assert.Equal(RuleAction.Proxy, game.Action);
+        Assert.Equal(RuleAction.Direct, engine.Evaluate("notepad.exe", IPAddress.Parse("184.24.77.141"), 443).Action);
+        Assert.Equal(RuleAction.Direct, engine.Evaluate("Neverwinter.exe", IPAddress.Parse("184.24.77.141"), 443).Action);
+        Assert.Equal(RuleAction.Proxy, engine.Evaluate("GameClient.exe", IPAddress.Parse("92.122.166.194"), 80).Action);
+        Assert.Equal(RuleAction.Direct, engine.Evaluate("GameClient.exe", IPAddress.Parse("208.95.184.122"), 7255).Action);
+    }
+
+    [Fact]
+    public void MigrateFfxiv_InsertsRuleOnce()
+    {
+        var profile = Profile.CreateDefault();
+        profile.Rules.RemoveAll(r => r.Applications.Any(a => a.Equals("ffxiv_dx11.exe", StringComparison.OrdinalIgnoreCase)));
+        ProfileStore.MigrateFfxiv(profile);
+        ProfileStore.MigrateFfxiv(profile);
+        Assert.Equal(1, profile.Rules.Count(r => r.Name == "Final Fantasy XIV via Happ"));
+        Assert.Equal("Default", profile.Rules[^1].Name);
+    }
+
+    [Fact]
     public void Fallout76_GoesThroughProxy_OtherGamesStayDirect()
     {
         var engine = new RuleEngine(Profile.CreateDefault());

@@ -122,6 +122,36 @@ public sealed class Profile
                 },
                 new ProfileRule
                 {
+                    Name = "Neverwinter patch via Happ",
+                    Action = RuleAction.Proxy,
+                    ProxyId = happ.Id,
+                    Applications = ["Neverwinter.exe", "GameClient.exe"],
+                    Targets = ["*:80"]
+                },
+                new ProfileRule
+                {
+                    Name = "Bitcraft via Happ",
+                    Action = RuleAction.Proxy,
+                    ProxyId = happ.Id,
+                    Applications = ["BitCraft.exe"]
+                },
+                new ProfileRule
+                {
+                    Name = "Final Fantasy XIV via Happ",
+                    Action = RuleAction.Proxy,
+                    ProxyId = happ.Id,
+                    Applications =
+                    [
+                        "ffxivlauncher64.exe",
+                        "ffxivlauncher.exe",
+                        "ffxivboot64.exe",
+                        "ffxivboot.exe",
+                        "ffxiv_dx11.exe",
+                        "ffxiv_dx9.exe"
+                    ]
+                },
+                new ProfileRule
+                {
                     Name = "Windows online check via Happ",
                     Action = RuleAction.Proxy,
                     ProxyId = happ.Id,
