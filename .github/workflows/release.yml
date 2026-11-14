@@ -41,12 +41,7 @@ jobs:
           $version = [regex]::Match((Get-Content -Raw installer\ProxyPilot.iss), '#define MyAppVersion "([^"]+)"').Groups[1].Value
           if (-not $version) { throw 'version missing' }
           $tag = "v$version"
-          gh release view $tag --json tagName --jq .tagName *> $null
-          if ($LASTEXITCODE -eq 0) {
-            Write-Host "Release $tag already exists"
-            exit 0
-          }
-          $notes = @"
+          $notes = @'
           Патч Neverwinter, Final Fantasy XIV и Bitcraft идут через Happ.
 
           ## Что изменилось
@@ -70,10 +65,17 @@ jobs:
           Neverwinter's launcher and GameClient use Happ only for port 80, so the game ports stay direct. Existing profiles gain that rule on the next start. Final Fantasy XIV's launcher and client send TCP through Happ, and world UDP from ffxiv_dx11.exe and ffxiv_dx9.exe goes through Happ too. Bitcraft's TCP and UDP go through Happ: direct sockets to the game servers stay outside the tunnel, so changing the Happ server does not move them. Steam, NVIDIA, Fallout 76, and other apps are unchanged.
 
           The setup is one file for Windows 10/11 x64, with no separate .NET install. It upgrades an existing ProxyPilot in place and keeps `%AppData%\ProxyPilot`. Start Happ first. On the SmartScreen unknown-publisher prompt, choose Run anyway. If Kaspersky flags WinDivert, exclude `C:\Program Files\ProxyPilot`.
-          "@
+          '@
           $notes = ($notes -split "`n" | ForEach-Object { $_.TrimStart() }) -join "`n"
           $path = Join-Path $env:RUNNER_TEMP 'release.md'
           Set-Content -Path $path -Value $notes -Encoding utf8
+          gh release view $tag --json tagName --jq .tagName *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release edit $tag --notes-file $path
+            if ($LASTEXITCODE -ne 0) { throw "release notes update failed" }
+            Write-Host "Updated notes for $tag"
+            exit 0
+          }
           $asset = "artifacts\ProxyPilot-Setup-$version-x64.exe"
           if (-not (Test-Path $asset)) { throw "missing $asset" }
           gh release create $tag $asset --title "ProxyPilot $version" --notes-file $path --target $env:GITHUB_SHA
